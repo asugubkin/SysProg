@@ -20,7 +20,7 @@ void MyThread(int id)
 
 void start()
 {
-	hTimer = CreateWaitableTimer(NULL, TRUE, NULL);
+	hTimer = CreateWaitableTimer(NULL, FALSE, NULL);
 	const int nThreads = 10;
 	for (int i = 0; i < nThreads; ++i)
 	{
@@ -35,11 +35,11 @@ void start()
 
 
 	/*
-	FILETIME lTime, fTime;
+	FILETIME uTime, fTime;
 	SYSTEMTIME sTime = { 0 };
 	SystemTimeToFileTime(&sTime, &fTime);
-	FileTimeToLocalFileTime(&fTime, &lTime);
-	SetWaitableTimer(hTimer, (LARGE_INTEGER*)&lTime, 1000, NULL, NULL, false);
+	LocalFileTimeToFileTime(&fTime, &uTime);
+	SetWaitableTimer(hTimer, (LARGE_INTEGER*)&uTime, 1000, NULL, NULL, false);
 	*/
 
 	CancelWaitableTimer(hTimer);
