@@ -51,8 +51,6 @@ void start()
 
 CWinApp theApp;
 
-using namespace std;
-
 int main()
 {
 	int nRetCode = 0;

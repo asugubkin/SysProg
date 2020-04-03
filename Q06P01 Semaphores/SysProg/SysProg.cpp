@@ -9,52 +9,37 @@
 #define new DEBUG_NEW
 #endif
 
-
-void f(int id)
-{
-	MyClass o;
-//  ExitThread(id*100);
-//  _endthreadex(id * 100);
-}
+HANDLE hSemaphore;
 
 void MyThread(int id)
 {
-	for (int i = 0; i<10; ++i)
-	{
-		SafeWrite("Thread ", id);
-		Sleep(100);
-	}
-	f(id);
-	SafeWrite("After f()");
-//  return id*10;
+	SafeWrite("Thread", id, "start");
+
+	WaitForSingleObject(hSemaphore, INFINITE);
+	SafeWrite("Thread", id, "semaphore capture");
+	Sleep(3000);
+	ReleaseSemaphore(hSemaphore, 1, NULL);
+	SafeWrite("Thread", id, "semaphore release");
+
+	SafeWrite("Thread", id, "end");
 }
 
 void start()
 {
+	hSemaphore = CreateSemaphore(NULL, 1, 3, NULL);
 	const int nThreads = 10;
-	HANDLE hThreads[nThreads];
 	for (int i = 0; i < nThreads; ++i)
 	{
-//	  hThreads[i] = CreateThread(NULL, 0, MyThread, (LPVOID)i, 0, NULL);
-//	  hThreads[i] = (HANDLE)_beginthreadex(NULL, 0, MyThread, (LPVOID)i, 0, NULL);
-//	  hThreads[i] = AfxBeginThread(MyThread, (LPVOID)i)->m_hThread;
 		thread t(MyThread, i);
-		hThreads[i] = t.native_handle();
 		t.detach();
 	}
 	SafeWrite("Threads created");
-	WaitForMultipleObjects(nThreads, hThreads, TRUE, INFINITE);
-	SafeWrite("Threads done");
-	/*
-	for (int i = 0; i < nThreads, ++i)
-	{
-		DWORD dwCode;
-		GetExitCodeThread(hThreads[i], &dwCode);
-		SafeWrite(dwCode);
-//	  CloseHandle(hThreads[i]);
-	}
-	*/
+	int n;
+	cin >> n;
+	ReleaseSemaphore(hSemaphore, n, NULL);
 	_getch();
+
+	CloseHandle(hSemaphore);
 }
 
 // The one and only application object
@@ -66,7 +51,7 @@ int main()
 	int nRetCode = 0;
 
 	HMODULE hModule = ::GetModuleHandle(nullptr);
-			
+
 	if (hModule != nullptr)
 	{
 		// initialize MFC and print and error on failure
