@@ -2,9 +2,6 @@
 //
 
 #include "pch.h"
-#include <iostream>
-#include <windows.h>
-using namespace std;
 
 int main()
 {
@@ -16,7 +13,7 @@ int main()
 		DWORD dwRead;
 		char buff[MAXLEN+1];
 
-		if (ReadFile(hIn, buff, MAXLEN, &dwRead, nullptr) && !dwRead)
+		if (!ReadFile(hIn, buff, MAXLEN, &dwRead, nullptr) || !dwRead)
 			break;
 
 		buff[min(MAXLEN, dwRead)] = 0;

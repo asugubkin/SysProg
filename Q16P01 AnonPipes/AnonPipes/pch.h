@@ -13,5 +13,6 @@
 #include <string>
 #include <windows.h>
 
+using namespace std;
 
 #endif //PCH_H

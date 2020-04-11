@@ -56,16 +56,14 @@ CAnonDlg::CAnonDlg(CWnd* pParent /*=nullptr*/)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 
-	SECURITY_ATTRIBUTES sa = { 0 };
-	sa.bInheritHandle = TRUE;
-	BOOL bRes = CreatePipe(&hRead, &hWrite, &sa, 0);
+	SECURITY_ATTRIBUTES sa = { sizeof(sa), NULL, TRUE };
+	CreatePipe(&hRead, &hWrite, &sa, 0);
+	SetHandleInformation(hWrite, HANDLE_FLAG_INHERIT, 0);
 
 	STARTUPINFO si = { 0 };
 	si.cb = sizeof(si);
 	si.dwFlags = STARTF_USESTDHANDLES;
 	si.hStdInput = hRead;
-	si.hStdOutput = GetStdHandle(STD_OUTPUT_HANDLE);
-	si.hStdError = GetStdHandle(STD_ERROR_HANDLE);
 
 	PROCESS_INFORMATION pi;
 
