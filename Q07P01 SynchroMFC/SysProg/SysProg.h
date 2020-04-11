@@ -2,9 +2,6 @@
 
 #include "resource.h"
 #include <afxmt.h>
-#include <mutex>
-#include <shared_mutex>
-#include <condition_variable>
 
 inline void DoWrite()
 {
@@ -17,10 +14,10 @@ template <class T, typename... Args> inline void DoWrite(T& value, Args... args)
 	DoWrite(args...);
 }
 
-mutex m;
+CCriticalSection gCS;
 template <typename... Args> inline void SafeWrite(Args... args)
 {
-	lock_guard<mutex> lg(m);
+	CSingleLock sl(&gCS, TRUE);
 	DoWrite(args...);
 }
 
