@@ -1,11 +1,11 @@
 
-// AnonDlgDlg.cpp : implementation file
+// LocalLoopDlg.cpp : implementation file
 //
 
 #include "pch.h"
 #include "framework.h"
-#include "AnonDlg.h"
-#include "AnonDlgDlg.h"
+#include "LocalLoop.h"
+#include "LocalLoopDlg.h"
 #include "afxdialogex.h"
 
 #ifdef _DEBUG
@@ -13,52 +13,35 @@
 #endif
 
 
-// CAnonDlg dialog
+// CLocalLoopDlg dialog
 
 
 
-CAnonDlg::CAnonDlg(CWnd* pParent /*=nullptr*/)
-	: CDialogEx(IDD_ANONDLG_DIALOG, pParent)
-	, m_Text(_T(""))
+CLocalLoopDlg::CLocalLoopDlg(CWnd* pParent /*=nullptr*/)
+	: CDialogEx(IDD_LOCALLOOP_DIALOG, pParent)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
-
-	SECURITY_ATTRIBUTES sa = { sizeof(sa), NULL, TRUE };
-	CreatePipe(&hRead, &hWrite, &sa, 0);
-	SetHandleInformation(hWrite, HANDLE_FLAG_INHERIT, 0);
-
-	STARTUPINFO si = { 0 };
-	si.cb = sizeof(si);
-	si.dwFlags = STARTF_USESTDHANDLES;
-	si.hStdInput = hRead;
-
-	PROCESS_INFORMATION pi;
-
-	CreateProcess(NULL, (LPSTR)"AnonChild.exe", &sa, NULL, TRUE, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi);
 }
 
-CAnonDlg::~CAnonDlg()
-{
-	CloseHandle(hRead);
-	CloseHandle(hWrite);
-}
-
-
-void CAnonDlg::DoDataExchange(CDataExchange* pDX)
+void CLocalLoopDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
-	DDX_Text(pDX, IDC_EDIT, m_Text);
+	DDX_Control(pDX, IDC_PROGRESS, m_Progress);
+	DDX_Control(pDX, IDC_EDIT, m_Edit);
 }
 
-BEGIN_MESSAGE_MAP(CAnonDlg, CDialogEx)
+BEGIN_MESSAGE_MAP(CLocalLoopDlg, CDialogEx)
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
+	ON_EN_CHANGE(IDC_EDIT, &CLocalLoopDlg::OnEnChangeEdit)
+	ON_BN_CLICKED(ID_START, &CLocalLoopDlg::OnBnClickedStart)
+	ON_BN_CLICKED(ID_STOP, &CLocalLoopDlg::OnBnClickedStop)
 END_MESSAGE_MAP()
 
 
-// CAnonDlg message handlers
+// CLocalLoopDlg message handlers
 
-BOOL CAnonDlg::OnInitDialog()
+BOOL CLocalLoopDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
 
@@ -67,7 +50,7 @@ BOOL CAnonDlg::OnInitDialog()
 	SetIcon(m_hIcon, TRUE);			// Set big icon
 	SetIcon(m_hIcon, FALSE);		// Set small icon
 
-	// TODO: Add extra initialization here
+	m_Progress.SetRange(0, 1000);
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
@@ -76,7 +59,7 @@ BOOL CAnonDlg::OnInitDialog()
 //  to draw the icon.  For MFC applications using the document/view model,
 //  this is automatically done for you by the framework.
 
-void CAnonDlg::OnPaint()
+void CLocalLoopDlg::OnPaint()
 {
 	if (IsIconic())
 	{
@@ -103,16 +86,48 @@ void CAnonDlg::OnPaint()
 
 // The system calls this function to obtain the cursor to display while the user drags
 //  the minimized window.
-HCURSOR CAnonDlg::OnQueryDragIcon()
+HCURSOR CLocalLoopDlg::OnQueryDragIcon()
 {
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
-void CAnonDlg::OnOK()
+void CLocalLoopDlg::OnEnChangeEdit()
 {
-	UpdateData();
-	DWORD dwWrite;
-	WriteFile(hWrite, m_Text.GetString(), m_Text.GetLength(), &dwWrite, nullptr);
-	m_Text = "";
-	UpdateData(FALSE);
+	CString s;
+	m_Edit.GetWindowText(s);
+	SetWindowText(CTime::GetCurrentTime().Format("%T") + " " + s);
+}
+
+void WaitIdle()
+{
+	MSG msg;
+	while (PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE))
+	{
+		AfxGetApp()->PumpMessage();
+	}
+}
+
+void CLocalLoopDlg::OnBnClickedStart()
+{
+	m_bCanRun = true;
+	for (int i = 0; i < 1000; i++)
+	{
+		WaitIdle();
+		DoSomething(i);
+		if (!m_bCanRun)
+			break;
+	}
+	m_bCanRun = false;
+}
+
+void CLocalLoopDlg::OnBnClickedStop()
+{
+	m_bCanRun = false;
+}
+
+void CLocalLoopDlg::DoSomething(int i)
+{
+	Sleep(5);
+	m_Progress.SetPos(i);
+	OnEnChangeEdit();
 }

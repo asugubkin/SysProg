@@ -1,11 +1,11 @@
 
-// AnonDlgDlg.cpp : implementation file
+// TimerDlg.cpp : implementation file
 //
 
 #include "pch.h"
 #include "framework.h"
-#include "AnonDlg.h"
-#include "AnonDlgDlg.h"
+#include "Timer.h"
+#include "TimerDlg.h"
 #include "afxdialogex.h"
 
 #ifdef _DEBUG
@@ -13,52 +13,36 @@
 #endif
 
 
-// CAnonDlg dialog
+// CTimerDlg dialog
 
 
 
-CAnonDlg::CAnonDlg(CWnd* pParent /*=nullptr*/)
-	: CDialogEx(IDD_ANONDLG_DIALOG, pParent)
-	, m_Text(_T(""))
+CTimerDlg::CTimerDlg(CWnd* pParent /*=nullptr*/)
+	: CDialogEx(IDD_TIMER_DIALOG, pParent)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
-
-	SECURITY_ATTRIBUTES sa = { sizeof(sa), NULL, TRUE };
-	CreatePipe(&hRead, &hWrite, &sa, 0);
-	SetHandleInformation(hWrite, HANDLE_FLAG_INHERIT, 0);
-
-	STARTUPINFO si = { 0 };
-	si.cb = sizeof(si);
-	si.dwFlags = STARTF_USESTDHANDLES;
-	si.hStdInput = hRead;
-
-	PROCESS_INFORMATION pi;
-
-	CreateProcess(NULL, (LPSTR)"AnonChild.exe", &sa, NULL, TRUE, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi);
 }
 
-CAnonDlg::~CAnonDlg()
-{
-	CloseHandle(hRead);
-	CloseHandle(hWrite);
-}
-
-
-void CAnonDlg::DoDataExchange(CDataExchange* pDX)
+void CTimerDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
-	DDX_Text(pDX, IDC_EDIT, m_Text);
+	DDX_Control(pDX, IDC_PROGRESS, m_Progress);
+	DDX_Control(pDX, IDC_EDIT, m_Edit);
 }
 
-BEGIN_MESSAGE_MAP(CAnonDlg, CDialogEx)
+BEGIN_MESSAGE_MAP(CTimerDlg, CDialogEx)
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
+	ON_EN_CHANGE(IDC_EDIT, &CTimerDlg::OnEnChangeEdit)
+	ON_WM_TIMER()
+	ON_BN_CLICKED(ID_START, &CTimerDlg::OnBnClickedStart)
+	ON_BN_CLICKED(ID_STOP, &CTimerDlg::OnBnClickedStop)
 END_MESSAGE_MAP()
 
 
-// CAnonDlg message handlers
+// CTimerDlg message handlers
 
-BOOL CAnonDlg::OnInitDialog()
+BOOL CTimerDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
 
@@ -67,7 +51,7 @@ BOOL CAnonDlg::OnInitDialog()
 	SetIcon(m_hIcon, TRUE);			// Set big icon
 	SetIcon(m_hIcon, FALSE);		// Set small icon
 
-	// TODO: Add extra initialization here
+	m_Progress.SetRange(0, 1000);
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
@@ -76,7 +60,7 @@ BOOL CAnonDlg::OnInitDialog()
 //  to draw the icon.  For MFC applications using the document/view model,
 //  this is automatically done for you by the framework.
 
-void CAnonDlg::OnPaint()
+void CTimerDlg::OnPaint()
 {
 	if (IsIconic())
 	{
@@ -103,16 +87,43 @@ void CAnonDlg::OnPaint()
 
 // The system calls this function to obtain the cursor to display while the user drags
 //  the minimized window.
-HCURSOR CAnonDlg::OnQueryDragIcon()
+HCURSOR CTimerDlg::OnQueryDragIcon()
 {
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
-void CAnonDlg::OnOK()
+void CTimerDlg::OnEnChangeEdit()
 {
-	UpdateData();
-	DWORD dwWrite;
-	WriteFile(hWrite, m_Text.GetString(), m_Text.GetLength(), &dwWrite, nullptr);
-	m_Text = "";
-	UpdateData(FALSE);
+	CString s;
+	m_Edit.GetWindowText(s);
+	SetWindowText(CTime::GetCurrentTime().Format("%T") + " " + s);
+}
+
+void CTimerDlg::OnBnClickedStart()
+{
+	KillTimer(0);
+	m_I = 0;
+	SetTimer(0, 1, NULL);
+}
+
+void CTimerDlg::OnBnClickedStop()
+{
+	KillTimer(0);
+}
+
+void CTimerDlg::DoSomething()
+{
+	Sleep(5);
+	m_Progress.SetPos(m_I);
+	OnEnChangeEdit();
+}
+
+void CTimerDlg::OnTimer(UINT_PTR nIDEvent)
+{
+	if (++m_I == 1000)
+		KillTimer(0);
+
+	DoSomething();
+
+	CDialogEx::OnTimer(nIDEvent);
 }
