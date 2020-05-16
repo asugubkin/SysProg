@@ -27,8 +27,9 @@ int main()
 	_dup2(_fileno(fp), _fileno(stdout));
 
 	PROCESS_INFORMATION pi;
-
 	CreateProcess(NULL, (LPSTR)"AnonChild.exe", &sa, NULL, TRUE, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi);
+	CloseHandle(pi.hThread);
+	CloseHandle(pi.hProcess);
 
 	string s;
 	while (true)

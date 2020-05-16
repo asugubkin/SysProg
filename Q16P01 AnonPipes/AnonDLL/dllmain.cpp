@@ -15,8 +15,9 @@ void Init()
 	si.hStdInput = hRead;
 
 	PROCESS_INFORMATION pi;
-
 	CreateProcess(NULL, (LPSTR)"AnonChild.exe", &sa, NULL, TRUE, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi);
+	CloseHandle(pi.hThread);
+	CloseHandle(pi.hProcess);
 }
 
 void Cleanup()

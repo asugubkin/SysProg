@@ -35,6 +35,8 @@ CAnonDlg::CAnonDlg(CWnd* pParent /*=nullptr*/)
 	PROCESS_INFORMATION pi;
 
 	CreateProcess(NULL, (LPSTR)"AnonChild.exe", &sa, NULL, TRUE, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi);
+	CloseHandle(pi.hThread);
+	CloseHandle(pi.hProcess);
 }
 
 CAnonDlg::~CAnonDlg()

@@ -11,6 +11,8 @@ void LaunchClient()
 	STARTUPINFO si = { sizeof(si) };
 	PROCESS_INFORMATION pi;
 	CreateProcess(NULL, (LPSTR)"MailSlotClient.exe", NULL, NULL, TRUE, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi);
+	CloseHandle(pi.hThread);
+	CloseHandle(pi.hProcess);
 }
 
 int main()
