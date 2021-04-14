@@ -52,24 +52,28 @@ int f()
 
 void Exception1()
 {
-	__try
+//	__try
 	{
-//		MyClass o;
-		if (f())
-			__leave;
-	}
-	__finally
-	{
-		if (AbnormalTermination())
+		_try
 		{
-			cout << "something wrong" << endl;
+			//		MyClass o;
+			if (f())
+				__leave;
 		}
-		else
+		__finally
 		{
-			cout << "ok" << endl;
+			if (AbnormalTermination())
+			{
+				cout << "something wrong" << endl;
+			}
+			else
+			{
+				cout << "ok" << endl;
+			}
 		}
+		cout << "SEH done" << endl;
 	}
-	cout << "SEH done" << endl;
+//	__except (EXCEPTION_EXECUTE_HANDLER) {}
 }
 
 DWORD GetFilter(DWORD exCode)
@@ -136,9 +140,9 @@ int main()
 {
 	Error();
 	cin >> n;
-//	Exception1();
-//	Exception2();
-	Exception3();
+	Exception1();
+	Exception2();
+//	Exception3();
 
 	_getch();
 }
