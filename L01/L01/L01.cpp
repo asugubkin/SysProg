@@ -16,7 +16,7 @@ CWinApp theApp;
 
 using namespace std;
 
-HANDLE hEvents[10];
+HANDLE hEvents[100];
 DWORD WINAPI MyThread(LPVOID lpParameter)
 {
     int i = int(lpParameter);
@@ -36,16 +36,34 @@ void start()
     int i;
     for (i = 0; i < 10; ++i)
     {
-        CreateThread(NULL, 0, MyThread, (LPVOID)i, 0, NULL);
         hEvents[i] = CreateEvent(NULL, FALSE, FALSE, NULL);
+        CreateThread(NULL, 0, MyThread, (LPVOID)i, 0, NULL);
     }
-    int n;
-    HANDLE hEvent = CreateEvent(NULL, FALSE, FALSE, "StopEvent");
+
+    HANDLE hStartEvent = CreateEvent(NULL, FALSE, FALSE, "StartEvent");
+    HANDLE hStopEvent = CreateEvent(NULL, FALSE, FALSE, "StopEvent");
+    HANDLE hConfirmEvent = CreateEvent(NULL, FALSE, FALSE, "ConfirmEvent");
+    HANDLE hControlEvents[2] = {hStartEvent, hStopEvent};
     while (i)
     {
-        WaitForSingleObject(hEvent, INFINITE);
-        SetEvent(hEvents[--i]);
+        int n = WaitForMultipleObjects(2, hControlEvents, FALSE, INFINITE) - WAIT_OBJECT_0;
+        switch (n)
+        {
+            case 0:
+                hEvents[i] = CreateEvent(NULL, FALSE, FALSE, NULL);
+                CreateThread(NULL, 0, MyThread, (LPVOID)i, 0, NULL);
+                SetEvent(hConfirmEvent);
+                i++;
+                break;
+            case 1:
+                SetEvent(hEvents[--i]);
+                SetEvent(hConfirmEvent);
+                break;
+        }
     }
+    SetEvent(hConfirmEvent);
+    int n;
+    cin >> n;
 }
 
 void start0()

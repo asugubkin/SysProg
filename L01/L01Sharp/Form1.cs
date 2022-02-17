@@ -15,7 +15,9 @@ namespace L01Sharp
     public partial class Form1 : Form
     {
         Process childProcess = null;
-        System.Threading.EventWaitHandle stopEvent = new EventWaitHandle(false, EventResetMode.AutoReset, "StopEvent");
+        System.Threading.EventWaitHandle stopEvent = new EventWaitHandle(false, EventResetMode.ManualReset, "StopEvent");
+        System.Threading.EventWaitHandle startEvent = new EventWaitHandle(false, EventResetMode.AutoReset, "StartEvent");
+        System.Threading.EventWaitHandle confirmEvent = new EventWaitHandle(false, EventResetMode.AutoReset, "ConfirmEvent");
 
         public Form1()
         {
@@ -30,6 +32,8 @@ namespace L01Sharp
             }
             else
             {
+                startEvent.Set();
+                confirmEvent.WaitOne();
             }
         }
 
@@ -38,6 +42,7 @@ namespace L01Sharp
             if (!(childProcess == null || childProcess.HasExited))
             {
                 stopEvent.Set();
+                confirmEvent.WaitOne();
             }
         }
     }
