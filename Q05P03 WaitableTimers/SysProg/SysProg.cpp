@@ -27,21 +27,21 @@ void start()
 		thread t(MyThread, i);
 		t.detach();
 	}
-	LARGE_INTEGER dTime;
-	dTime.QuadPart = -10000*1000;
-	SetWaitableTimer(hTimer, &dTime, 1000, NULL, NULL, false);
-	SafeWrite("Threads created");
-	_getch();
+//	LARGE_INTEGER dTime;
+//	dTime.QuadPart = -10000*1000;
+//	SetWaitableTimer(hTimer, &dTime, 1000, NULL, NULL, false);
+//	SafeWrite("Threads created");
+//	_getch();
 
 
-	/*
+	
 	FILETIME uTime, fTime;
 	SYSTEMTIME sTime = { 0 };
 	SystemTimeToFileTime(&sTime, &fTime);
 	LocalFileTimeToFileTime(&fTime, &uTime);
 	SetWaitableTimer(hTimer, (LARGE_INTEGER*)&uTime, 1000, NULL, NULL, false);
-	*/
 
+	_getch();
 	CancelWaitableTimer(hTimer);
 	CloseHandle(hTimer);
 	

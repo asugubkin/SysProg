@@ -10,6 +10,9 @@
 #endif
 
 
+CRITICAL_SECTION gcs;
+HANDLE hMutex;
+
 void f(int id)
 {
 	MyClass o;
@@ -21,7 +24,12 @@ void MyThread(int id)
 {
 	for (int i = 0; i<10; ++i)
 	{
+//		EnterCriticalSection(&gcs);
+		WaitForSingleObject(hMutex, INFINITE);
+
 		SafeWrite("Thread ", id);
+//		LeaveCriticalSection(&gcs);
+		ReleaseMutex(hMutex);
 		Sleep(100);
 	}
 	f(id);
@@ -31,6 +39,8 @@ void MyThread(int id)
 
 void start()
 {
+//	InitializeCriticalSection(&gcs);
+	hMutex = CreateMutex(NULL, FALSE, NULL);
 	const int nThreads = 10;
 	HANDLE hThreads[nThreads];
 	for (int i = 0; i < nThreads; ++i)
@@ -55,6 +65,8 @@ void start()
 	}
 	*/
 	_getch();
+//	DeleteCriticalSection(&gcs);
+	CloseHandle(hMutex);
 }
 
 // The one and only application object
