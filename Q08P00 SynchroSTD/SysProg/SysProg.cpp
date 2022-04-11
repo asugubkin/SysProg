@@ -9,31 +9,61 @@
 #define new DEBUG_NEW
 #endif
 
-shared_mutex evMutex;
-condition_variable_any cv;
+mutex evMutex1;
+condition_variable cv1;
 
-void MyThread(int id)
+shared_mutex evMutex2;
+condition_variable_any cv2;
+
+void MyThread1(int id)
 {
 	SafeWrite("Thread", id, "start");
-	shared_lock<shared_mutex> ul(evMutex);
-	cv.wait(ul);
+	unique_lock<mutex> ul(evMutex1);
+	cv1.wait(ul, [id] {SafeWrite("cv1 wait completed", id); return true; });
+
+	SafeWrite("Thread", id, "cv capture");
+	Sleep(1000);
+	SafeWrite("Thread", id, "end");
+
+//	cv1.notify_one();
+}
+
+void MyThread2(int id)
+{
+	SafeWrite("Thread", id, "start");
+	shared_lock<shared_mutex> ul(evMutex2);
+	cv2.wait(ul);
 
 	SafeWrite("Thread", id, "cv capture");
 	Sleep(1000);
 	SafeWrite("Thread", id, "end");
 }
 
-void start()
+void start1()
 {
 	const int nThreads = 10;
 	for (int i = 0; i < nThreads; ++i)
 	{
-		thread t(MyThread, i);
+		thread t(MyThread1, i);
 		t.detach();
 	}
 	SafeWrite("Threads created");
 	_getch();
-	cv.notify_all();
+	cv1.notify_all();
+	_getch();
+}
+
+void start2()
+{
+	const int nThreads = 10;
+	for (int i = 0; i < nThreads; ++i)
+	{
+		thread t(MyThread2, i);
+		t.detach();
+	}
+	SafeWrite("Threads created");
+	_getch();
+	cv2.notify_all();
 	_getch();
 }
 
@@ -58,7 +88,7 @@ int main()
 		}
 		else
 		{
-			start();
+			start2();
 		}
 	}
 	else
