@@ -5,16 +5,33 @@
 #include "framework.h"
 #include "L01.h"
 
+using namespace std;
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
+
+string GetLastErrorString(DWORD ErrorID = 0)
+{
+    if (!ErrorID)
+        ErrorID = GetLastError();
+    if (!ErrorID)
+        return string();
+
+    LPSTR pBuff = nullptr;
+    size_t size = FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+        NULL, ErrorID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&pBuff, 0, NULL);
+    string s(pBuff, size);
+    LocalFree(pBuff);
+
+    return s;
+}
 
 
 // The one and only application object
 
 CWinApp theApp;
 
-using namespace std;
 
 HANDLE hEvents[100];
 DWORD WINAPI MyThread(LPVOID lpParameter)
@@ -37,11 +54,32 @@ struct header
     int size;
 };
 
-void mapsend(int addr, const char* str)
+string mapreceive(header& h)
+{
+    HANDLE hFile = CreateFile("filemap.dat", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_WRITE | FILE_SHARE_READ, NULL, OPEN_ALWAYS, 0, 0);
+    
+    HANDLE hFileMap = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(header), "MyMap");
+    LPVOID buff = MapViewOfFile(hFileMap, FILE_MAP_ALL_ACCESS, 0, 0, sizeof(header));
+    h = *((header*)buff);
+    UnmapViewOfFile(buff);
+    CloseHandle(hFileMap);
+
+    int n = h.size + sizeof(header);
+    hFileMap = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, n, "MyMap");
+    buff = MapViewOfFile(hFileMap, FILE_MAP_ALL_ACCESS, 0, 0, n);
+ //   cout << GetLastErrorString();
+    string s((char*) buff + sizeof(header), h.size);
+
+    UnmapViewOfFile(buff);
+    CloseHandle(hFileMap);
+    return s;
+}
+
+HANDLE mapsend(int addr, const char* str)
 {
     header h = { addr, strlen(str) + 1 };
-    HANDLE hFile = CreateFile("file.dat", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_WRITE | FILE_SHARE_READ, NULL, OPEN_ALWAYS, 0, 0);
-    HANDLE hFileMap = CreateFileMapping(hFile, NULL, PAGE_READWRITE, 0, h.size+sizeof(header), NULL);
+    HANDLE hFile = CreateFile("filemap.dat", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_WRITE | FILE_SHARE_READ, NULL, OPEN_ALWAYS, 0, 0);
+    HANDLE hFileMap = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, h.size+sizeof(header), "MyMap");
     char* buff = (char*)MapViewOfFile(hFileMap, FILE_MAP_ALL_ACCESS, 0, 0, h.size + sizeof(header));
 
     memcpy(buff, &h, sizeof(header));
@@ -49,20 +87,27 @@ void mapsend(int addr, const char* str)
 
 
     UnmapViewOfFile(buff);
-    CloseHandle(hFileMap);
+    return hFileMap;
+//    CloseHandle(hFileMap);
     CloseHandle(hFile);
-
 }
 
 void start()
 {
     HANDLE hFile = CreateFile("file.dat", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_WRITE| FILE_SHARE_READ, NULL, OPEN_ALWAYS, 0, 0);
+//    SetFilePointer
     int i = 12;
     DWORD dwDone;
     WriteFile(hFile, &i, sizeof(i), &dwDone, NULL);
     cout << dwDone << endl;
     CloseHandle(hFile);
-    mapsend(3, "13245");
+    HANDLE hMap = mapsend(3, "13245");
+
+    header h;
+    string s = mapreceive(h);
+    cout << s << " " << h.size << " " << h.addr << endl;
+    CloseHandle(hMap);
+    //    VirtualAlloc
 }
 
 void start1()
