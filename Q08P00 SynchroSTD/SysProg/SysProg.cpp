@@ -83,6 +83,43 @@ template<typename T> void generate(vector<T>& v, int n)
 	}
 }
 
+void sum(vector<double>::iterator begin, vector<double>::iterator end, promise<double> sump)
+{
+	sump.set_value(accumulate(begin, end, 0.0));
+	//set_value_at_thread_exit
+}
+
+void sleeper(std::promise<void> ev)
+{
+	SafeWrite("sleeper start");
+	std::this_thread::sleep_for(std::chrono::seconds(5));
+	SafeWrite("sleeper done");
+	ev.set_value();
+}
+
+void start3()
+{
+	vector<double> v;
+	generate(v, 10000000);
+
+	std::promise<double> sump;
+	std::future<double> sumf = sump.get_future();
+	std::thread sumt(sum, v.begin(), v.end(), std::move(sump));
+
+	SafeWrite(sumf.get());
+
+
+	sumt.join();
+
+	std::promise<void> ev;
+	std::future<void> evf = ev.get_future();
+	std::thread new_work_thread(sleeper, std::move(ev));
+	SafeWrite("waiting");
+	evf.wait();
+	SafeWrite("waiting done");
+	new_work_thread.join();
+}
+
 // выборочное среднее для диапазона значений
 template<typename T>
 double mean(T begin, T end)
@@ -142,7 +179,7 @@ void threaded_calc(const vector<double>& v, int nThreads)
 }
 
 
-void start3()
+void start4()
 {
 	int nMax = thread::hardware_concurrency();
 
@@ -177,9 +214,10 @@ int main()
 		}
 		else
 		{
-//			start1();
+			start1();
 //			start2();
-			start3();
+//			start3();
+//			start4();
 		}
 	}
 	else
