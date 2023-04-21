@@ -23,4 +23,11 @@
 #include <iostream>
 #include <thread>
 #include <conio.h>
+
+#include <future>
+#include <tuple>
+#include <algorithm>
+#include <random>
+#include <numeric>
+
 using namespace std;
